@@ -1,0 +1,83 @@
+import statistics
+
+FOLDER = "swimdata/"
+
+def read_swim_data(filename):
+    """Return swim data from a file.
+
+    Given the name of. a swimmer's file (in filename), extract all the required
+    data, then return it to the caller as tuple.    
+    """
+    swimmer, age, distance, stroke = filename.removesuffix(".txt").split("-")
+    with open(FOLDER+filename) as file:
+        lines = file.readlines()
+        times = lines[0].strip().split(",")
+    converts = []
+    for t in times:
+        # The minutes value might be missing, so guard against this causing a crash.
+        if ":" in t:
+            minutes, rest = t.split(":")
+        else:
+            minutes = 0
+            rest = t
+        seconds, hundredths = rest.split(".")
+        converts.append((int(minutes)*60*100) + (int(seconds)* 100) + int(hundredths))
+    average = statistics.mean(converts)
+    mins_secs, hundredths = f"{(average / 100):.2f}".split(".")
+    mins_secs = int(mins_secs)
+    minutes = mins_secs // 60
+    seconds = mins_secs - minutes*60
+    average = f"{minutes}:{seconds:0>2}.{hundredths}"
+    return swimmer, age, distance, stroke, times, average, converts # Returned as a tuple.
+
+import hfpy_utils
+
+CHARTS = "charts/"
+
+def produce_bar_chart(fn):
+    """Given the name of the swimmer's file, produce a HTML/SVG-based bar chart.
+
+    Save the chart to the CHARTS folder. Return the path to the bar chart file.
+    """
+
+    data = read_swim_data(fn)
+    (swimmer, age, distance, stroke, times, average, converts) = data
+    title = f"{swimmer} (Under {age}) {distance} {stroke}"
+    from_max = max(converts)
+
+    html = f"""<!DOCTYPE html>
+    <html>
+        <head>
+            <title>{title}</title>
+        </head>
+        <body>
+        <h3>{title}</h3>
+    """
+
+    svgs = ""
+
+    times.reverse()
+    converts.reverse()
+
+    for n,t in enumerate(times):
+        bar_width = hfpy_utils.convert2range(converts[n], 0, from_max, 0, 350)
+        svgs = f"""{svgs}
+            <svg height="30" width="400">
+                <rect height="30" width="{bar_width}" style="fill:rgb(0,0,255);" />
+            </svg>{t}<br />
+        """
+    footer = f"""
+        <p>Average time: {average}</p>
+        </body>
+    </html>
+    """
+
+    page = f"{html}{svgs}{footer}"
+
+    save_to = f"{CHARTS}{fn.removesuffix('.txt')}.html"
+
+    with open(save_to, "w") as tf:
+        print(page, file=tf)
+    
+    return save_to
+
