@@ -34,7 +34,7 @@ import hfpy_utils
 
 CHARTS = "charts/"
 
-def produce_bar_chart(fn):
+def produce_bar_chart(fn, location=CHARTS):
     """Given the name of the swimmer's file, produce a HTML/SVG-based bar chart.
 
     Save the chart to the CHARTS folder. Return the path to the bar chart file.
@@ -74,7 +74,7 @@ def produce_bar_chart(fn):
 
     page = f"{html}{svgs}{footer}"
 
-    save_to = f"{CHARTS}{fn.removesuffix('.txt')}.html"
+    save_to = f"{location}{fn.removesuffix('.txt')}.html"
 
     with open(save_to, "w") as tf:
         print(page, file=tf)
