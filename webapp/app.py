@@ -10,7 +10,7 @@ app.secret_key = "b437Ar8jXdmeVTDZThgEZhLUmVL7EErRwna6Yfgwv"
 def index():
     return render_template(
         "index.html", 
-        title="Welcome to the Swimclub system", 
+        title="Welcome to Swimclub", 
     )
 
 @app.get("/swimmers")
