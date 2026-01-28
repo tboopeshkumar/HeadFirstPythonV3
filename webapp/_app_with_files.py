@@ -1,5 +1,4 @@
 from flask import Flask, session,request, render_template
-import data_utils
 import os
 import swimclub
 
@@ -12,18 +11,6 @@ def index():
     return render_template(
         "index.html", 
         title="Welcome to Swimclub", 
-    )
-
-@app.get("/swims")
-def display_swim_sessions():
-    data = data_utils.get_swim_sessions()
-    dates = [d[0].split(" ")[0] for d in data]
-    return render_template(
-        "select.html",
-        title="Select a swim session",
-        url="/swimmers",
-        select_id="chosen_date",
-        data=dates
     )
 
 @app.get("/swimmers")
