@@ -1,7 +1,6 @@
 from flask import Flask, session,request, render_template
 import data_utils
-import os
-import swimclub
+import convert_utils
 
 app = Flask(__name__)
 
@@ -26,54 +25,60 @@ def display_swim_sessions():
         data=dates
     )
 
-@app.get("/swimmers")
+@app.post("/swimmers")
 def display_swimmers():
-    populate_data()
+    session["chosen_date"] = request.form["chosen_date"]   
+    data = data_utils.get_session_swimmers(session["chosen_date"])   
     return render_template(
         "select.html",
         title="Select a swimmer",
-        url="/showfiles",
+        url="/showevents",
         select_id ="swimmer",
-        data = sorted(session["swimmers"])
+        data = sorted([f"{name}-{age}" for name, age in data])
     )
 
-@app.post("/showfiles")
+@app.post("/showevents")
 def display_swimmer_files():
-    populate_data()
-    name = request.form["swimmer"]    
+    session["swimmer"], session["age"] = request.form["swimmer"].split("-")
+    data = data_utils.get_swimmers_events(session["swimmer"], session["age"], session["chosen_date"])
+    
     return render_template(
         "select.html",
         title="Select an event",
         url="/showbarchart",
-        select_id="file",
-        data = session["swimmers"][name]
+        select_id="event",
+        data = [f"{distance} {stroke}" for distance, stroke in data]
     )
 
 
 @app.get("/files/<swimmer>")
 def get_swimmers_files(swimmer):
-    populate_data()
     return str(session["swimmers"][swimmer])
 
 @app.post("/showbarchart")
 def show_bar_chart():
-    file_id = request.form["file"]
-    # Ensure the chart is written to the templates directory that lives
-    # next to this module regardless of the current working directory.
-    templates_dir = os.path.join(os.path.dirname(__file__), "templates") + os.sep
-    location = swimclub.produce_bar_chart(file_id, templates_dir)
-    return render_template(location.split("/")[-1])
+    distance, stroke = request.form["event"].split(" ")
+    data = data_utils.get_swimmers_times(
+        session["swimmer"],
+        session["age"],
+        distance,
+        stroke,
+        session["chosen_date"]
+    )
+    
+    times = [time[0] for time in data]
 
-def populate_data():
-    if "swimmers" not in session:
-        swim_files = os.listdir(swimclub.FOLDER)
-        swim_files.remove('.DS_Store')
-        session["swimmers"] = {}
-        for file in swim_files:
-            name, *_ = swimclub.read_swim_data(file)
-            if name not in session["swimmers"]:
-                session["swimmers"][name] = []      
-            session["swimmers"][name].append(file)
+    average_str, times_reversed, scaled = convert_utils.perform_conversions(times)
+    world_records = convert_utils.get_worlds(distance, stroke)
+    header = f"{session["swimmer"]} (Under {session['age']}) {distance} {stroke} - {session['chosen_date']}"
+    return render_template(
+        "chart.html",
+        title=header,
+        data=list(zip(times_reversed, scaled)),
+        average=average_str,
+        worlds=world_records
+    )
+
 
 if __name__ == "__main__":
     app.run(debug=True)
