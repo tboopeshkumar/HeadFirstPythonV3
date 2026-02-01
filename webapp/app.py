@@ -16,7 +16,8 @@ def index():
 @app.get("/swims")
 def display_swim_sessions():
     data = data_utils.get_swim_sessions()
-    dates = [d[0].split(" ")[0] for d in data]
+    #dates = [d[0].split(" ")[0] for d in data] # sqlite3
+    dates = [str(d[0].date()) for d in data] # MySQL/MariaDB
     return render_template(
         "select.html",
         title="Select a swim session",
@@ -70,7 +71,7 @@ def show_bar_chart():
 
     average_str, times_reversed, scaled = convert_utils.perform_conversions(times)
     world_records = convert_utils.get_worlds(distance, stroke)
-    header = f"{session["swimmer"]} (Under {session['age']}) {distance} {stroke} - {session['chosen_date']}"
+    header = f"{session['swimmer']} (Under {session['age']}) {distance} {stroke} - {session['chosen_date']}"
     return render_template(
         "chart.html",
         title=header,

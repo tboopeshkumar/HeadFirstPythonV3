@@ -1,4 +1,4 @@
-import DBcm
+from db_cm_alt import UseDatabase
 
 db_details = "CoachDB.sqlite3"
 
@@ -52,7 +52,7 @@ SQL_INSERT_TIMES = """
 """
 
 
-with DBcm.UseDatabase(db_details) as db:
+with UseDatabase(db_details) as db:
     for fn in files:
         name, age, distance, stroke = fn.removesuffix(".txt").split("-")
 
